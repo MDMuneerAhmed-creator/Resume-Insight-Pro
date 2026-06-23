@@ -58,6 +58,7 @@ router.post("/resumes/upload", upload.single("file"), async (req, res) => {
       .values({
         userId,
         fileName,
+        filePath: req.file.path,
         status: "analyzing",
       })
       .returning();
@@ -162,8 +163,8 @@ router.post("/resumes/:id/reanalyze", async (req, res) => {
       return;
     }
 
-    if (!resume.extractedText) {
-      res.status(400).json({ error: "No extracted text to reanalyze" });
+    if (!resume.extractedText && !resume.filePath) {
+      res.status(400).json({ error: "No file or extracted text available for re-analysis" });
       return;
     }
 
@@ -175,7 +176,7 @@ router.post("/resumes/:id/reanalyze", async (req, res) => {
 
     res.json(updated);
 
-    analyzeResume(id, null, resume.extractedText).catch((err) => {
+    analyzeResume(id, resume.filePath ?? null, resume.extractedText ?? undefined).catch((err) => {
       logger.error({ err, resumeId: id }, "Reanalysis failed");
     });
   } catch (err) {

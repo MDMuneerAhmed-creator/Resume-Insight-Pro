@@ -1,0 +1,3 @@
+- [pdf-parse v2 incompatibility](pdf-parse-v2.md) — pdf-parse@2.x has no default export/function API; downgrade to v1.1.1 and externalize in esbuild.
+- [OpenRouter key detection](openrouter-key.md) — OPENAI_API_KEY may be an OpenRouter key (sk-or-v1...); auto-detect and set baseURL accordingly.
+- [api-server stale build](api-server-stale-build.md) — routes return 404 when server runs stale esbuild dist; always restart workflow after code changes to trigger rebuild.

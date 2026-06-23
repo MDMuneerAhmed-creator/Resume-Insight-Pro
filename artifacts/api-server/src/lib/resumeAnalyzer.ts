@@ -1,16 +1,22 @@
 import fs from "fs";
+// pdf-parse v1 is externalized in esbuild (CJS) — loaded via require shim
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse: (buf: Buffer) => Promise<{ text: string }> = require("pdf-parse");
 import OpenAI from "openai";
 import { db, resumesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "./logger";
 
+const apiKey = process.env.OPENAI_API_KEY ?? "";
+const isOpenRouter = apiKey.startsWith("sk-or-");
+
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey,
+  ...(isOpenRouter && { baseURL: "https://openrouter.ai/api/v1" }),
 });
 
 async function extractTextFromPdf(filePath: string): Promise<string> {
   try {
-    const pdfParse = (await import("pdf-parse")).default;
     const buffer = fs.readFileSync(filePath);
     const data = await pdfParse(buffer);
     return data.text;
@@ -57,7 +63,7 @@ ${text.slice(0, 8000)}
 Respond with only valid JSON, no markdown, no extra text.`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5-mini",
+    model: "gpt-4o-mini",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.3,
     max_tokens: 2000,

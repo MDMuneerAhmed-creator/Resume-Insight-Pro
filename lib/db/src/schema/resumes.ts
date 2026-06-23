@@ -8,6 +8,7 @@ export const resumesTable = pgTable("resumes", {
   fileName: text("file_name").notNull(),
   uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
   status: text("status").notNull().default("pending"),
+  filePath: text("file_path"),
   atsScore: integer("ats_score"),
   extractedText: text("extracted_text"),
   skills: text("skills"),
