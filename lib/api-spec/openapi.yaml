@@ -1,22 +1,24 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Resume Analyzer API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: resumes
+    description: Resume operations
+  - name: dashboard
+    description: Dashboard and analytics
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +26,235 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /resumes/upload:
+    post:
+      operationId: uploadResume
+      tags: [resumes]
+      summary: Upload and analyze a PDF resume
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/ResumeUploadInput"
+      responses:
+        "201":
+          description: Resume uploaded and analysis started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resume"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /resumes:
+    get:
+      operationId: listResumes
+      tags: [resumes]
+      summary: List all resumes for the authenticated user
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of resumes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Resume"
+
+  /resumes/{id}:
+    get:
+      operationId: getResume
+      tags: [resumes]
+      summary: Get a single resume with full analysis
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Resume details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resume"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteResume
+      tags: [resumes]
+      summary: Delete a resume
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /resumes/{id}/reanalyze:
+    post:
+      operationId: reanalyzeResume
+      tags: [resumes]
+      summary: Re-run AI analysis on an existing resume
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated resume with fresh analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resume"
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard summary statistics for a user
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/skill-gaps:
+    get:
+      operationId: getSkillGaps
+      tags: [dashboard]
+      summary: Aggregated missing skills across all resumes
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Skill gap analysis
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SkillGapItem"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    ResumeUploadInput:
+      type: object
+      required: [userId, fileName]
+      properties:
+        userId:
+          type: string
+        fileName:
+          type: string
+
+    Resume:
+      type: object
+      required: [id, userId, fileName, uploadedAt, status]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        fileName:
+          type: string
+        uploadedAt:
+          type: string
+        status:
+          type: string
+          enum: [pending, analyzing, done, failed]
+        atsScore:
+          type: ["integer", "null"]
+        extractedText:
+          type: ["string", "null"]
+        skills:
+          type: ["string", "null"]
+        missingSkills:
+          type: ["string", "null"]
+        suggestions:
+          type: ["string", "null"]
+        education:
+          type: ["string", "null"]
+        experience:
+          type: ["string", "null"]
+        projects:
+          type: ["string", "null"]
+
+    DashboardStats:
+      type: object
+      required: [totalResumes, averageAtsScore, bestScore, analyzedCount]
+      properties:
+        totalResumes:
+          type: integer
+        averageAtsScore:
+          type: ["number", "null"]
+        bestScore:
+          type: ["integer", "null"]
+        analyzedCount:
+          type: integer
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/Resume"
+
+    SkillGapItem:
+      type: object
+      required: [skill, count]
+      properties:
+        skill:
+          type: string
+        count:
+          type: integer
