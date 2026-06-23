@@ -6,7 +6,8 @@ import {
   useReanalyzeResume,
   getGetResumeQueryKey,
   getListResumesQueryKey,
-  getGetDashboardStatsQueryKey
+  getGetDashboardStatsQueryKey,
+  getGetSkillGapsQueryKey
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@clerk/react";
@@ -46,7 +47,7 @@ function parseJsonArray(str: string | null | undefined): string[] {
   try {
     const parsed = JSON.parse(str);
     return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
+  } catch {
     return [];
   }
 }
@@ -62,7 +63,28 @@ export default function ResumeDetail() {
 
   const { data: resume, isLoading, error } = useGetResume(
     resumeId,
-    { query: { enabled: !!resumeId, queryKey: getGetResumeQueryKey(resumeId) } }
+    {
+      query: {
+        enabled: !!resumeId,
+        queryKey: getGetResumeQueryKey(resumeId),
+        // Poll every 3 seconds while analysis is in progress
+        refetchInterval: (query) => {
+          const data = query.state.data as { status?: string } | undefined;
+          if (data?.status === "pending" || data?.status === "analyzing") {
+            return 3000;
+          }
+          return false;
+        },
+        // When analysis completes, invalidate dashboard so stats update
+        select: (data) => {
+          if (data?.status === "done" && user?.id) {
+            queryClient.invalidateQueries({ queryKey: getGetDashboardStatsQueryKey({ userId: user.id }) });
+            queryClient.invalidateQueries({ queryKey: getGetSkillGapsQueryKey({ userId: user.id }) });
+          }
+          return data;
+        },
+      },
+    }
   );
 
   const deleteMutation = useDeleteResume({
@@ -72,6 +94,7 @@ export default function ResumeDetail() {
         if (user?.id) {
           queryClient.invalidateQueries({ queryKey: getListResumesQueryKey({ userId: user.id }) });
           queryClient.invalidateQueries({ queryKey: getGetDashboardStatsQueryKey({ userId: user.id }) });
+          queryClient.invalidateQueries({ queryKey: getGetSkillGapsQueryKey({ userId: user.id }) });
         }
         setLocation("/dashboard");
       },
@@ -136,11 +159,11 @@ export default function ResumeDetail() {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3">
-              {resume.fileName}
-              {isAnalyzing && <Badge variant="secondary" className="animate-pulse bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20">Analyzing...</Badge>}
-              {isFailed && <Badge variant="destructive">Failed</Badge>}
-              {resume.status === "done" && <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">Analyzed</Badge>}
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3 flex-wrap">
+              <span className="break-all">{resume.fileName}</span>
+              {isAnalyzing && <Badge variant="secondary" className="animate-pulse bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 shrink-0">Analyzing...</Badge>}
+              {isFailed && <Badge variant="destructive" className="shrink-0">Failed</Badge>}
+              {resume.status === "done" && <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20 shrink-0">Analyzed</Badge>}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Uploaded on {format(new Date(resume.uploadedAt), "MMMM d, yyyy 'at' h:mm a")}
@@ -148,12 +171,13 @@ export default function ResumeDetail() {
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button 
             variant="outline" 
             className="gap-2"
             disabled={isAnalyzing || reanalyzeMutation.isPending}
             onClick={() => reanalyzeMutation.mutate({ id: resumeId })}
+            title="Re-analyze this resume"
           >
             <RefreshCw className={`w-4 h-4 ${reanalyzeMutation.isPending ? 'animate-spin' : ''}`} />
             Re-analyze
@@ -170,7 +194,7 @@ export default function ResumeDetail() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Resume</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete {resume.fileName}? This action cannot be undone and will remove all associated analysis data.
+                  Are you sure you want to delete <strong>{resume.fileName}</strong>? This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -192,7 +216,27 @@ export default function ResumeDetail() {
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <RefreshCw className="w-12 h-12 text-primary animate-spin mb-4" />
             <h3 className="text-xl font-bold mb-2">Analyzing your resume</h3>
-            <p className="text-muted-foreground">Our AI is reading your document, extracting skills, and generating suggestions. This usually takes 10-30 seconds.</p>
+            <p className="text-muted-foreground">Our AI is reading your document, extracting skills, and generating suggestions. This usually takes 10–30 seconds.</p>
+            <p className="text-xs text-muted-foreground mt-4">This page will update automatically.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {isFailed && (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+            <AlertCircle className="w-10 h-10 text-destructive mb-3" />
+            <h3 className="text-lg font-bold mb-2 text-destructive">Analysis Failed</h3>
+            <p className="text-muted-foreground mb-4 text-sm">Something went wrong while analyzing this resume. You can try again by clicking Re-analyze.</p>
+            <Button 
+              variant="outline"
+              className="gap-2"
+              disabled={reanalyzeMutation.isPending}
+              onClick={() => reanalyzeMutation.mutate({ id: resumeId })}
+            >
+              <RefreshCw className={`w-4 h-4 ${reanalyzeMutation.isPending ? 'animate-spin' : ''}`} />
+              Try Again
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -208,7 +252,7 @@ export default function ResumeDetail() {
                 <CardTitle className="text-lg text-muted-foreground uppercase tracking-wider">Overall ATS Score</CardTitle>
               </CardHeader>
               <CardContent className="flex justify-center pb-8 pt-4">
-                <CircularProgress value={resume.atsScore || 0} size={180} strokeWidth={12} />
+                <CircularProgress value={resume.atsScore ?? 0} size={180} strokeWidth={12} />
               </CardContent>
             </Card>
 
@@ -251,7 +295,7 @@ export default function ResumeDetail() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground italic">No major skill gaps identified based on common industry standards.</p>
+                  <p className="text-sm text-muted-foreground italic">No major skill gaps identified.</p>
                 )}
               </CardContent>
             </Card>
@@ -292,7 +336,7 @@ export default function ResumeDetail() {
                     <Briefcase className="w-5 h-5 text-primary" />
                     Experience
                   </h3>
-                  <div className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted/30 rounded-lg border border-border/50 font-mono">
+                  <div className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted/30 rounded-lg border border-border/50 font-mono leading-relaxed">
                     {resume.experience || "No experience section clearly identified."}
                   </div>
                 </div>
@@ -304,7 +348,7 @@ export default function ResumeDetail() {
                     <GraduationCap className="w-5 h-5 text-primary" />
                     Education
                   </h3>
-                  <div className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted/30 rounded-lg border border-border/50 font-mono">
+                  <div className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted/30 rounded-lg border border-border/50 font-mono leading-relaxed">
                     {resume.education || "No education section clearly identified."}
                   </div>
                 </div>
@@ -316,7 +360,7 @@ export default function ResumeDetail() {
                     <FolderKanban className="w-5 h-5 text-primary" />
                     Projects
                   </h3>
-                  <div className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted/30 rounded-lg border border-border/50 font-mono">
+                  <div className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted/30 rounded-lg border border-border/50 font-mono leading-relaxed">
                     {resume.projects || "No projects section clearly identified."}
                   </div>
                 </div>
