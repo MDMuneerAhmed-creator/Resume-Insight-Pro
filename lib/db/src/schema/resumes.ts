@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -17,7 +17,10 @@ export const resumesTable = pgTable("resumes", {
   education: text("education"),
   experience: text("experience"),
   projects: text("projects"),
-});
+}, (table) => [
+  index("resumes_user_id_idx").on(table.userId),
+  index("resumes_user_id_uploaded_at_idx").on(table.userId, table.uploadedAt),
+]);
 
 export const insertResumeSchema = createInsertSchema(resumesTable).omit({
   id: true,

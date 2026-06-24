@@ -80,7 +80,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </nav>
             </SheetContent>
           </Sheet>
-          <UserButton afterSignOutUrl="/" />
+          <UserButton />
         </div>
       </header>
 
@@ -105,7 +105,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           >
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
-          <UserButton afterSignOutUrl="/" />
+          <UserButton />
         </div>
       </aside>
 

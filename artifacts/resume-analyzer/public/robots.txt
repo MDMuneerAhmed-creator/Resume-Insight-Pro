@@ -1,2 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /upload
+Disallow: /resumes/
+Disallow: /sign-in
+Disallow: /sign-up

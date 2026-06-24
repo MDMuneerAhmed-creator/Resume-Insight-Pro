@@ -1,22 +1,27 @@
 import { Router } from "express";
 import { db, resumesTable } from "@workspace/db";
-import { eq, avg, max, count } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
 
 const router = Router();
 
+function getAuthUserId(req: any): string | null {
+  return req.auth?.userId ?? null;
+}
+
+// GET /api/dashboard/stats
 router.get("/dashboard/stats", async (req, res) => {
   try {
-    const { userId } = req.query as { userId: string };
-    if (!userId) {
-      res.status(400).json({ error: "userId is required" });
+    const authUserId = getAuthUserId(req);
+    if (!authUserId) {
+      res.status(401).json({ error: "Unauthorized" });
       return;
     }
 
     const allResumes = await db
       .select()
       .from(resumesTable)
-      .where(eq(resumesTable.userId, userId));
+      .where(eq(resumesTable.userId, authUserId));
 
     const analyzed = allResumes.filter((r) => r.status === "done");
     const scores = analyzed.map((r) => r.atsScore).filter((s): s is number => s !== null);
@@ -27,7 +32,7 @@ router.get("/dashboard/stats", async (req, res) => {
 
     const bestScore = scores.length > 0 ? Math.max(...scores) : null;
 
-    const recentActivity = allResumes
+    const recentActivity = [...allResumes]
       .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())
       .slice(0, 5);
 
@@ -44,18 +49,19 @@ router.get("/dashboard/stats", async (req, res) => {
   }
 });
 
+// GET /api/dashboard/skill-gaps
 router.get("/dashboard/skill-gaps", async (req, res) => {
   try {
-    const { userId } = req.query as { userId: string };
-    if (!userId) {
-      res.status(400).json({ error: "userId is required" });
+    const authUserId = getAuthUserId(req);
+    if (!authUserId) {
+      res.status(401).json({ error: "Unauthorized" });
       return;
     }
 
     const resumes = await db
       .select({ missingSkills: resumesTable.missingSkills })
       .from(resumesTable)
-      .where(eq(resumesTable.userId, userId));
+      .where(eq(resumesTable.userId, authUserId));
 
     const counts: Record<string, number> = {};
     for (const resume of resumes) {
