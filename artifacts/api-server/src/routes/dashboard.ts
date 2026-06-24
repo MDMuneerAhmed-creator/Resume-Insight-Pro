@@ -1,19 +1,16 @@
 import { Router } from "express";
+import { getAuth } from "@clerk/express";
 import { db, resumesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
 
 const router = Router();
 
-function getAuthUserId(req: any): string | null {
-  return req.auth?.userId ?? null;
-}
-
 // GET /api/dashboard/stats
 router.get("/dashboard/stats", async (req, res) => {
   try {
-    const authUserId = getAuthUserId(req);
-    if (!authUserId) {
+    const { userId } = getAuth(req);
+    if (!userId) {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
@@ -21,7 +18,7 @@ router.get("/dashboard/stats", async (req, res) => {
     const allResumes = await db
       .select()
       .from(resumesTable)
-      .where(eq(resumesTable.userId, authUserId));
+      .where(eq(resumesTable.userId, userId));
 
     const analyzed = allResumes.filter((r) => r.status === "done");
     const scores = analyzed.map((r) => r.atsScore).filter((s): s is number => s !== null);
@@ -52,8 +49,8 @@ router.get("/dashboard/stats", async (req, res) => {
 // GET /api/dashboard/skill-gaps
 router.get("/dashboard/skill-gaps", async (req, res) => {
   try {
-    const authUserId = getAuthUserId(req);
-    if (!authUserId) {
+    const { userId } = getAuth(req);
+    if (!userId) {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
@@ -61,7 +58,7 @@ router.get("/dashboard/skill-gaps", async (req, res) => {
     const resumes = await db
       .select({ missingSkills: resumesTable.missingSkills })
       .from(resumesTable)
-      .where(eq(resumesTable.userId, authUserId));
+      .where(eq(resumesTable.userId, userId));
 
     const counts: Record<string, number> = {};
     for (const resume of resumes) {
