@@ -22,19 +22,17 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
-          <div className="max-w-md w-full text-center space-y-4">
-            <div className="w-16 h-16 bg-destructive/10 rounded-2xl flex items-center justify-center mx-auto">
-              <span className="text-3xl">⚠️</span>
-            </div>
+          <div className="max-w-md w-full text-center space-y-5">
+            <img src="/logo.png" alt="Skillzy" className="w-16 h-16 object-contain mx-auto opacity-60" />
             <h1 className="text-2xl font-bold text-foreground">Something went wrong</h1>
             <p className="text-muted-foreground text-sm">
               {this.state.error?.message || "An unexpected error occurred."}
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+              className="px-6 py-2.5 skillzy-gradient text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
             >
-              Reload Page
+              Reload Skillzy
             </button>
           </div>
         </div>

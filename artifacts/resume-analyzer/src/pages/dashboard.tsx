@@ -1,9 +1,9 @@
 import { useUser } from "@clerk/react";
 import { Link } from "wouter";
 import { format } from "date-fns";
-import { 
-  useGetDashboardStats, 
-  useGetSkillGaps, 
+import {
+  useGetDashboardStats,
+  useGetSkillGaps,
   getGetDashboardStatsQueryKey,
   getGetSkillGapsQueryKey
 } from "@workspace/api-client-react";
@@ -14,15 +14,15 @@ import { Badge } from "@/components/ui/badge";
 import { UploadCloud, FileText, Target, Award, ArrowRight, TrendingUp } from "lucide-react";
 import { CircularProgress } from "@/components/ui/circular-progress";
 
-function ScoreColor(score: number | null | undefined): string {
-  if (score === null || score === undefined) return "text-muted-foreground";
+function scoreColor(score: number | null | undefined): string {
+  if (score == null) return "text-muted-foreground";
   if (score >= 80) return "text-green-500";
   if (score >= 60) return "text-primary";
   return "text-destructive";
 }
 
 function StatusBadge({ status }: { status: string }) {
-  if (status === "done") return <Badge className="bg-green-500/10 text-green-500 border-green-500/20 text-xs">Done</Badge>;
+  if (status === "done") return <Badge className="bg-green-500/10 text-green-500 border-green-500/20 text-xs">Analyzed</Badge>;
   if (status === "analyzing" || status === "pending") return <Badge variant="secondary" className="animate-pulse bg-yellow-500/10 text-yellow-500 text-xs">Analyzing…</Badge>;
   if (status === "failed") return <Badge variant="destructive" className="text-xs">Failed</Badge>;
   return null;
@@ -68,11 +68,11 @@ export default function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Welcome back, <span className="font-medium text-foreground">{user?.firstName || user?.username || "there"}</span>. Here's your resume overview.
+            Welcome back, <span className="font-semibold text-foreground">{user?.firstName || user?.username || "there"}</span>. Here's your Skillzy overview.
           </p>
         </div>
         <Link href="/upload">
-          <Button className="gap-2 shrink-0">
+          <Button className="gap-2 shrink-0 skillzy-gradient border-0 text-white hover:opacity-90 shadow-md shadow-primary/20">
             <UploadCloud className="w-4 h-4" />
             Analyze New Resume
           </Button>
@@ -81,34 +81,36 @@ export default function Dashboard() {
 
       {/* Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
+        <Card className="relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-0.5 skillzy-gradient" />
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Uploaded</CardTitle>
-            <FileText className="w-4 h-4 text-muted-foreground" />
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <FileText className="w-4 h-4 text-primary" />
+            </div>
           </CardHeader>
           <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
+            {statsLoading ? <Skeleton className="h-8 w-16" /> : (
               <>
                 <div className="text-3xl font-bold font-mono">{totalCount}</div>
-                <p className="text-xs text-muted-foreground mt-1">{analyzedCount} analyzed</p>
+                <p className="text-xs text-muted-foreground mt-1">{analyzedCount} fully analyzed</p>
               </>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-0.5 skillzy-gradient" />
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Average ATS Score</CardTitle>
-            <Target className="w-4 h-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Avg ATS Score</CardTitle>
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Target className="w-4 h-4 text-primary" />
+            </div>
           </CardHeader>
           <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
+            {statsLoading ? <Skeleton className="h-8 w-16" /> : (
               <>
-                <div className={`text-3xl font-bold font-mono ${ScoreColor(stats?.averageAtsScore)}`}>
+                <div className={`text-3xl font-bold font-mono ${scoreColor(stats?.averageAtsScore)}`}>
                   {stats?.averageAtsScore != null ? Math.round(stats.averageAtsScore) : "--"}
                   <span className="text-lg text-muted-foreground font-normal">/100</span>
                 </div>
@@ -118,17 +120,18 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-0.5 skillzy-gradient" />
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">Best Score</CardTitle>
-            <Award className="w-4 h-4 text-muted-foreground" />
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Award className="w-4 h-4 text-primary" />
+            </div>
           </CardHeader>
           <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
+            {statsLoading ? <Skeleton className="h-8 w-16" /> : (
               <>
-                <div className={`text-3xl font-bold font-mono ${ScoreColor(stats?.bestScore)}`}>
+                <div className={`text-3xl font-bold font-mono ${scoreColor(stats?.bestScore)}`}>
                   {stats?.bestScore ?? "--"}
                   {stats?.bestScore != null && <span className="text-lg text-muted-foreground font-normal">/100</span>}
                 </div>
@@ -139,7 +142,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Main content */}
+      {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Activity */}
         <div className="lg:col-span-2">
@@ -149,28 +152,28 @@ export default function Dashboard() {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-primary" />
-                    Recent Activity
+                    Recent Resumes
                   </CardTitle>
-                  <CardDescription className="mt-1">Your latest uploaded resumes and their scores.</CardDescription>
+                  <CardDescription className="mt-1">Your latest uploads and their analysis results.</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               {statsLoading ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
                 </div>
               ) : stats?.recentActivity && stats.recentActivity.length > 0 ? (
                 <div className="space-y-3">
                   {stats.recentActivity.map(resume => (
                     <Link key={resume.id} href={`/resumes/${resume.id}`}>
-                      <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/50 hover:bg-muted/50 hover:border-primary/30 transition-all cursor-pointer group">
+                      <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/50 hover:bg-primary/5 hover:border-primary/30 transition-all cursor-pointer group">
                         <div className="flex items-center gap-4 min-w-0">
                           <div className="w-12 h-12 shrink-0">
                             <CircularProgress value={resume.atsScore ?? 0} size={48} strokeWidth={4} />
                           </div>
                           <div className="min-w-0">
-                            <p className="font-semibold truncate max-w-[200px] sm:max-w-none">{resume.fileName}</p>
+                            <p className="font-semibold truncate max-w-[180px] sm:max-w-none">{resume.fileName}</p>
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                               <span className="text-xs text-muted-foreground">{format(new Date(resume.uploadedAt), 'MMM d, yyyy')}</span>
                               <StatusBadge status={resume.status} />
@@ -183,14 +186,14 @@ export default function Dashboard() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-16 text-muted-foreground">
-                  <FileText className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                  <p className="font-medium">No resumes analyzed yet</p>
-                  <p className="text-sm mt-1">Upload your first resume to get started.</p>
+                <div className="text-center py-16">
+                  <img src="/logo.png" alt="Skillzy" className="w-16 h-16 object-contain mx-auto mb-4 opacity-20" />
+                  <p className="font-semibold text-foreground">No resumes yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">Upload your first resume to get started.</p>
                   <Link href="/upload">
-                    <Button className="mt-4 gap-2" size="sm">
+                    <Button className="mt-4 gap-2 skillzy-gradient border-0 text-white hover:opacity-90" size="sm">
                       <UploadCloud className="w-4 h-4" />
-                      Upload Resume
+                      Analyze My Resume
                     </Button>
                   </Link>
                 </div>
@@ -205,9 +208,9 @@ export default function Dashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-4 h-4 text-primary" />
-                Frequent Skill Gaps
+                Skill Gaps
               </CardTitle>
-              <CardDescription>Skills commonly missing across your uploads.</CardDescription>
+              <CardDescription>Common skills missing across your resumes.</CardDescription>
             </CardHeader>
             <CardContent>
               {gapsLoading ? (
@@ -219,15 +222,15 @@ export default function Dashboard() {
                   {skillGaps.map((gap, i) => (
                     <Badge key={i} variant="secondary" className="px-3 py-1 font-mono text-xs border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors">
                       {gap.skill}
-                      <span className="ml-1.5 text-muted-foreground text-xs">×{gap.count}</span>
+                      <span className="ml-1.5 text-muted-foreground">×{gap.count}</span>
                     </Badge>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-10 text-muted-foreground">
-                  <Target className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                <div className="text-center py-10">
+                  <Target className="w-10 h-10 mx-auto mb-3 text-muted-foreground opacity-20" />
                   <p className="text-sm font-medium">No patterns yet</p>
-                  <p className="text-xs mt-1">Skill gaps will appear after you analyze multiple resumes.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Patterns appear after analyzing multiple resumes.</p>
                 </div>
               )}
             </CardContent>

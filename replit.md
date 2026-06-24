@@ -1,6 +1,8 @@
-# [Project name]
+# Skillzy — AI-Powered Resume Analyzer
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+AI-powered resume analyzer that gives users an ATS score, detects skill gaps, and provides actionable improvement suggestions.
+
+**Tagline:** Skill Today. Shine Tomorrow.
 
 ## Run & Operate
 
@@ -14,32 +16,37 @@ _Replace the heading above with the project's name, and this line with one sente
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
+- API: Express 5 + `@clerk/express` (`getAuth(req)` for all auth checks)
 - DB: PostgreSQL + Drizzle ORM
+- Frontend: React + Vite + Wouter + TanStack Query + Clerk React v6
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
+- Auth: Clerk (use `getAuth(req)` NOT `req.auth` in Express routes)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/resume-analyzer/` — React frontend (routes at `/`)
+- `artifacts/api-server/` — Express API (routes at `/api`)
+- `lib/db/` — Drizzle schema + migrations
+- `artifacts/api-server/uploads/` — Uploaded PDFs
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- **Auth pattern**: Always use `getAuth(req)` from `@clerk/express` in route handlers — not `req.auth?.userId` which doesn't work
+- **PDF parsing**: `pdf-parse@1.1.1` pinned (v2 has breaking class-based API); externalized in esbuild
+- **AI**: OpenRouter key (`sk-or-v1…`) auto-detected; routes to `openrouter.ai/api/v1` with model `gpt-4o-mini`
+- **Polling**: Resume detail page polls every 3s while `status === "analyzing"` via `refetchInterval`
+- **Security**: All API routes verify ownership via `getAuth(req).userId === resume.userId`
 
-## Product
+## Brand
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Name: **Skillzy**
+- Logo: `artifacts/resume-analyzer/public/logo.png`
+- Colors: Blue `hsl(210 76% 43%)` + Teal `hsl(193 100% 42%)`
+- CSS utilities: `.skillzy-gradient` (bg), `.skillzy-gradient-text` (text)
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
-
-## Gotchas
-
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Keep all API auth using `getAuth(req)` from `@clerk/express`
+- Brand name is "Skillzy" everywhere — never "Analyzer"

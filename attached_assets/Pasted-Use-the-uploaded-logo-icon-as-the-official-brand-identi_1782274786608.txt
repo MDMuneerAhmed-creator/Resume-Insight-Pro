@@ -1,0 +1,89 @@
+Use the uploaded logo/icon as the official brand identity for my website.
+
+Brand Name: Skillzy
+
+Task:
+Rebrand the entire application to “Skillzy” and integrate the uploaded logo consistently across all pages and components.
+
+Requirements:
+
+1. Branding
+
+* Replace all existing app names with “Skillzy”.
+* Use the uploaded logo as the primary brand logo.
+* Maintain a modern, professional, AI-powered look.
+* Use the logo’s blue, teal, and white color palette throughout the UI.
+
+2. Navigation
+
+* Display the Skillzy logo in the navbar.
+* Display the logo in the sidebar.
+* Show the brand name “Skillzy” beside the logo.
+* Ensure responsiveness on desktop, tablet, and mobile.
+
+3. Authentication Pages
+
+* Add the Skillzy logo to Login, Signup, Forgot Password, and Reset Password pages.
+* Create a clean welcome screen using the logo.
+
+4. Dashboard
+
+* Show the Skillzy logo in the dashboard header.
+* Use the logo colors for buttons, cards, charts, and highlights.
+* Maintain consistent branding throughout the dashboard.
+
+5. Resume Analyzer
+
+* Add Skillzy branding to the Resume Analyzer page.
+* Use the logo on upload screens, loading screens, and result pages.
+
+6. Favicon and App Icons
+
+* Generate favicon.ico from the uploaded logo.
+* Create app icons in:
+    * 16x16
+    * 32x32
+    * 48x48
+    * 192x192
+    * 512x512
+* Configure the favicon across the website.
+
+7. PWA Support
+
+* Use the uploaded logo as the PWA app icon.
+* Generate:
+    * manifest.json
+    * apple-touch-icon
+    * maskable icon
+* Ensure installable web app support.
+
+8. Loading and Empty States
+
+* Create branded loading screens using the Skillzy logo.
+* Create empty-state illustrations using the logo theme.
+
+9. Design System
+
+* Primary Color: Extract from logo.
+* Secondary Color: Extract from logo.
+* Accent Color: Extract from logo.
+* Apply consistent spacing, typography, shadows, and gradients.
+
+10. Final Verification
+
+* Check every page for branding consistency.
+* Verify logo visibility in light and dark mode.
+* Ensure favicon works correctly.
+* Ensure responsive design across all screen sizes.
+
+Deliverables:
+
+* Fully rebranded application named “Skillzy”.
+* Updated logo integration.
+* Favicon setup.
+* PWA icons.
+* Consistent UI design system.
+* Production-ready branding implementation.
+
+Optional Tagline:
+“Skill Today. Shine Tomorrow.”
