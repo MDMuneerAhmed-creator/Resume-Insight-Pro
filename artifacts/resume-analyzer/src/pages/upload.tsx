@@ -65,13 +65,26 @@ export default function Upload() {
 
     try {
       const token = await getToken();
-      if (!token) throw new Error("Authentication failed. Please sign in again.");
+
+console.log("========== CLERK DEBUG ==========");
+
+console.log("User ID:", user?.id);
+
+console.log("Token:", token);
+
+if (!token) {
+
+  throw new Error("Authentication failed. Please sign in again.");
+}
 
       const formData = new FormData();
       formData.append("file", file);
       formData.append("fileName", file.name);
 
       setUploadProgress(35);
+      console.log("Sending Authorization header...");
+
+      console.log("Authorization:", `Bearer ${token}`);
 
       const response = await fetch("/api/resumes/upload", {
         method: "POST",

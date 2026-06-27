@@ -44,27 +44,43 @@ const router = Router();
 // POST /api/resumes/upload
 router.post("/resumes/upload", upload.single("file"), async (req, res) => {
   try {
-    const { userId } = getAuth(req);
+    console.log("========== UPLOAD REQUEST ==========");
+    console.log("Authorization Header:", req.headers.authorization);
+
+    const auth = getAuth(req);
+
+    console.log("getAuth() =>", auth);
+    console.log("userId =>", auth.userId);
+
+    const { userId } = auth;
+
     if (!userId) {
       if (req.file) fs.unlink(req.file.path, () => {});
-      res.status(401).json({ error: "Unauthorized" });
-      return;
+
+      return res.status(401).json({
+        error: "Unauthorized",
+        auth,
+      });
     }
 
     const { fileName } = req.body as { fileName?: string };
 
     if (!fileName) {
       if (req.file) fs.unlink(req.file.path, () => {});
-      res.status(400).json({ error: "fileName is required" });
-      return;
+      return res.status(400).json({
+        error: "fileName is required",
+      });
     }
 
     if (!req.file) {
-      res.status(400).json({ error: "PDF file is required" });
-      return;
+      return res.status(400).json({
+        error: "PDF file is required",
+      });
     }
 
-    const safeFileName = fileName.slice(0, 255).replace(/[<>:"/\\|?*\x00-\x1f]/g, "_");
+    const safeFileName = fileName
+      .slice(0, 255)
+      .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_");
 
     const [resume] = await db
       .insert(resumesTable)
@@ -79,15 +95,21 @@ router.post("/resumes/upload", upload.single("file"), async (req, res) => {
     res.status(201).json(resume);
 
     analyzeResume(resume.id, req.file.path).catch((err) => {
-      logger.error({ err, resumeId: resume.id }, "Background analysis failed");
+      logger.error(
+        { err, resumeId: resume.id },
+        "Background analysis failed"
+      );
     });
   } catch (err) {
     if (req.file) fs.unlink(req.file.path, () => {});
+
     logger.error({ err }, "Upload error");
-    res.status(500).json({ error: "Upload failed" });
+
+    res.status(500).json({
+      error: "Upload failed",
+    });
   }
 });
-
 // GET /api/resumes
 router.get("/resumes", async (req, res) => {
   try {
